@@ -96,15 +96,33 @@ select:focus-visible {
   background: transparent;
   color: var(--muted);
   font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition:
     background 0.2s,
     color 0.2s,
     transform 0.2s;
 }
-.icon-button:hover {
-  background: var(--white);
-  color: var(--rose);
-  transform: rotate(18deg);
+.icon-button:focus:not(:focus-visible) {
+  outline: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .icon-button:hover {
+    background: var(--white);
+    color: var(--rose);
+    transform: rotate(18deg);
+  }
+}
+.settings-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  font-family: Arial, sans-serif;
+  font-size: inherit;
+  line-height: 1;
+}
+.settings-icon::before {
+  content: "\2699\FE0E";
 }
 .period-strip {
   display: flex;
@@ -175,7 +193,7 @@ select:focus-visible {
   height: 6px;
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
-  content: '';
+  content: "";
   transform: rotate(45deg);
 }
 .period-summary small {
@@ -222,6 +240,14 @@ select:focus-visible {
   font-size: clamp(38px, 10vw, 58px);
   line-height: 1;
   letter-spacing: -0.02em;
+}
+.balance-currency {
+  display: inline-block;
+  margin-left: 0.08em;
+  font-size: 0.68em;
+  line-height: 1;
+  vertical-align: 0.12em;
+  letter-spacing: 0;
 }
 .balance-content span:last-child {
   color: rgba(255, 255, 255, 0.76);
@@ -509,12 +535,30 @@ h1 {
   font-size: 25px;
 }
 .close-button {
+  position: relative;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   background: #f9eded;
   color: var(--rose-deep);
-  font-size: 20px;
+  font-size: 0;
+}
+.close-button::before,
+.close-button::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 13px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  content: "";
+}
+.close-button::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.close-button::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 .form-grid {
   display: grid;
@@ -538,18 +582,6 @@ h1 {
   outline: 0;
   background: #fffafa;
   color: var(--ink);
-}
-.field input[type="date"] {
-  min-width: 0;
-  display: block;
-  text-align: left;
-}
-.field input[type="date"]::-webkit-date-and-time-value {
-  width: 100%;
-  text-align: left;
-}
-.field input[type="date"]::-webkit-calendar-picker-indicator {
-  margin: 0;
 }
 .field input:focus,
 .field select:focus {
