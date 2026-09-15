@@ -1,0 +1,13 @@
+{
+  "name": "Lilas Budget",
+  "short_name": "Lilas",
+  "description": "Gérer son budget simplement, période après période.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff9f7",
+  "theme_color": "#c97983",
+  "lang": "fr-CA",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
