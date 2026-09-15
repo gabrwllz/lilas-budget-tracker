@@ -1,11 +1,17 @@
-import { STORAGE_KEY } from './constants.js';
-import { addDays, dateKey, fromKey } from './utils.js';
+import { STORAGE_KEY } from "./constants.js";
+import { addDays, dateKey, fromKey } from "./utils.js";
 
 function defaultState() {
   return {
-    settings: { frequency: 'biweekly', nextPayday: dateKey(new Date()), initialized: false, userName: '' },
+    settings: {
+      frequency: "biweekly",
+      nextPayday: dateKey(new Date()),
+      initialized: false,
+      userName: "",
+      pendingPayroll: null,
+    },
     categories: [],
-    periods: {}
+    periods: {},
   };
 }
 
@@ -13,7 +19,8 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved?.settings?.nextPayday && Array.isArray(saved.categories)) {
-      saved.settings.userName ||= '';
+      saved.settings.userName ||= "";
+      saved.settings.pendingPayroll ||= null;
       saved.periods ||= {};
       return saved;
     }
@@ -28,8 +35,12 @@ export function createStore() {
   let selectedPeriodId = null;
 
   const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  const categoryById = (id) => state.categories.find((category) => category.id === id);
-  const frequencyDays = () => ({ weekly: 7, biweekly: 14, semimonthly: 15, monthly: null }[state.settings.frequency]);
+  const categoryById = (id) =>
+    state.categories.find((category) => category.id === id);
+  const frequencyDays = () =>
+    ({ weekly: 7, biweekly: 14, semimonthly: 15, monthly: null })[
+      state.settings.frequency
+    ];
 
   function periodForDate(date) {
     const reference = fromKey(state.settings.nextPayday);
@@ -37,13 +48,13 @@ export function createStore() {
     target.setHours(12, 0, 0, 0);
     let start = new Date(reference);
 
-    if (state.settings.frequency === 'semimonthly') {
+    if (state.settings.frequency === "semimonthly") {
       while (target < start) start = addDays(start, -15);
       while (target >= addDays(start, 15)) start = addDays(start, 15);
       return { start, end: addDays(start, 14) };
     }
 
-    if (state.settings.frequency === 'monthly') {
+    if (state.settings.frequency === "monthly") {
       while (target < start) start.setMonth(start.getMonth() - 1);
       while (addDays(start, 31) <= target) start.setMonth(start.getMonth() + 1);
       const end = new Date(start);
@@ -73,20 +84,30 @@ export function createStore() {
         id,
         start: id,
         end: dateKey(periodForDate(fromKey(id)).end),
-        categories: {}
+        categories: {},
       };
       state.categories.forEach((category) => {
         const previousLine = previous?.categories?.[category.id];
-        const carried = carry && previousLine
-          ? Math.max(0, previousLine.allocated - previousLine.spent + previousLine.extra)
-          : 0;
-        state.periods[id].categories[category.id] = createCategoryLine(Number(category.defaultAmount) + carried);
+        const carried =
+          carry && previousLine
+            ? Math.max(
+                0,
+                previousLine.allocated -
+                  previousLine.spent +
+                  previousLine.extra,
+              )
+            : 0;
+        state.periods[id].categories[category.id] = createCategoryLine(
+          Number(category.defaultAmount) + carried,
+        );
       });
     }
 
     state.categories.forEach((category) => {
       if (!state.periods[id].categories[category.id]) {
-        state.periods[id].categories[category.id] = createCategoryLine(Number(category.defaultAmount));
+        state.periods[id].categories[category.id] = createCategoryLine(
+          Number(category.defaultAmount),
+        );
       }
     });
     save();
@@ -98,14 +119,27 @@ export function createStore() {
   }
 
   function ensureCurrentPeriod() {
-    const currentId = dateKey(periodForDate(new Date()).start);
+    const today = new Date();
+    let currentId = dateKey(periodForDate(today).start);
+    const currentPeriod = state.periods[currentId];
+    if (
+      state.settings.pendingPayroll &&
+      currentPeriod &&
+      dateKey(today) > currentPeriod.end
+    ) {
+      Object.assign(state.settings, state.settings.pendingPayroll);
+      state.settings.pendingPayroll = null;
+      currentId = dateKey(periodForDate(today).start);
+    }
     ensurePeriod(currentId);
     selectedPeriodId ||= currentId;
     return currentId;
   }
 
   function selectedPeriod() {
-    return state.periods[selectedPeriodId] || ensurePeriod(ensureCurrentPeriod());
+    return (
+      state.periods[selectedPeriodId] || ensurePeriod(ensureCurrentPeriod())
+    );
   }
 
   return {
@@ -116,13 +150,27 @@ export function createStore() {
     ensurePeriod,
     ensureCurrentPeriod,
     selectedPeriod,
-    setSelectedPeriod: (id) => { selectedPeriodId = id; },
+    setSelectedPeriod: (id) => {
+      selectedPeriodId = id;
+    },
     getSelectedPeriodId: () => selectedPeriodId,
     periodIsCurrent: () => selectedPeriodId === ensureCurrentPeriod(),
-    categoryLine: (categoryId) => selectedPeriod().categories[categoryId] || createCategoryLine(0),
-    earliestPeriod: () => Object.values(state.periods).sort((first, second) => first.start.localeCompare(second.start))[0] || selectedPeriod(),
-    totalForPeriod: (period) => Object.values(period.categories).reduce((sum, line) => sum + line.allocated + line.extra, 0),
-    spentForPeriod: (period) => Object.values(period.categories).reduce((sum, line) => sum + line.spent, 0),
+    categoryLine: (categoryId) =>
+      selectedPeriod().categories[categoryId] || createCategoryLine(0),
+    earliestPeriod: () =>
+      Object.values(state.periods).sort((first, second) =>
+        first.start.localeCompare(second.start),
+      )[0] || selectedPeriod(),
+    totalForPeriod: (period) =>
+      Object.values(period.categories).reduce(
+        (sum, line) => sum + line.allocated + line.extra,
+        0,
+      ),
+    spentForPeriod: (period) =>
+      Object.values(period.categories).reduce(
+        (sum, line) => sum + line.spent,
+        0,
+      ),
     addExpense(categoryId, expense) {
       const line = selectedPeriod().categories[categoryId];
       line.spent += expense.amount;
@@ -158,6 +206,44 @@ export function createStore() {
       Object.assign(state.settings, settings);
       save();
     },
+    updatePayrollSettings(
+      settings,
+      { scope = "current", resetCurrent = false } = {},
+    ) {
+      if (scope === "next") {
+        state.settings.pendingPayroll = settings;
+        save();
+        return;
+      }
+
+      const today = new Date();
+      const previousId = dateKey(periodForDate(today).start);
+      const currentPeriod = ensurePeriod(previousId);
+      Object.assign(state.settings, settings);
+      state.settings.pendingPayroll = null;
+      const nextId = dateKey(periodForDate(today).start);
+
+      if (nextId !== previousId) {
+        delete state.periods[nextId];
+        currentPeriod.id = nextId;
+        currentPeriod.start = nextId;
+        currentPeriod.end = dateKey(periodForDate(today).end);
+        state.periods[nextId] = currentPeriod;
+        delete state.periods[previousId];
+      } else {
+        currentPeriod.end = dateKey(periodForDate(today).end);
+      }
+
+      if (resetCurrent) {
+        Object.keys(currentPeriod.categories).forEach((categoryId) => {
+          const category = categoryById(categoryId);
+          currentPeriod.categories[categoryId] = createCategoryLine(
+            Number(category?.defaultAmount || 0),
+          );
+        });
+      }
+      save();
+    },
     updateCategory(id, values) {
       const category = categoryById(id);
       if (!category) return;
@@ -169,13 +255,19 @@ export function createStore() {
     addCategory(category) {
       state.categories.push(category);
       Object.values(state.periods).forEach((period) => {
-        period.categories[category.id] = createCategoryLine(category.defaultAmount);
+        period.categories[category.id] = createCategoryLine(
+          category.defaultAmount,
+        );
       });
       save();
     },
     removeCategory(id) {
-      state.categories = state.categories.filter((category) => category.id !== id);
-      Object.values(state.periods).forEach((period) => delete period.categories[id]);
+      state.categories = state.categories.filter(
+        (category) => category.id !== id,
+      );
+      Object.values(state.periods).forEach(
+        (period) => delete period.categories[id],
+      );
       save();
     },
     removePeriod(id) {
@@ -184,13 +276,18 @@ export function createStore() {
     },
     shiftPeriod(direction) {
       const current = selectedPeriod();
+      if (direction > 0 && state.settings.pendingPayroll) {
+        Object.assign(state.settings, state.settings.pendingPayroll);
+        state.settings.pendingPayroll = null;
+      }
       const date = fromKey(current.start);
-      const next = state.settings.frequency === 'monthly'
-        ? new Date(date.setMonth(date.getMonth() + direction))
-        : addDays(date, (frequencyDays() || 15) * direction);
+      const next =
+        state.settings.frequency === "monthly"
+          ? new Date(date.setMonth(date.getMonth() + direction))
+          : addDays(date, (frequencyDays() || 15) * direction);
       const id = dateKey(periodForDate(next).start);
       const isNewPeriod = !state.periods[id];
       return { id, isNewPeriod };
-    }
+    },
   };
 }

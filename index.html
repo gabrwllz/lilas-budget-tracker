@@ -1,70 +1,136 @@
 <!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#fff9f7">
-  <meta name="description" content="Budget personnel par période de paie.">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
-  <title>Lilas Budget</title>
-</head>
-<body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand-mark" aria-hidden="true">?</div>
-      <div class="brand-copy"><span class="eyebrow">Mon budget</span><strong>Lilas</strong></div>
-      <button class="icon-button" id="settingsButton" type="button" aria-label="Ouvrir les réglages" title="Réglages">⚙</button>
-    </header>
-
-    <main>
-      <section class="period-strip" aria-label="Navigation entre les périodes">
-        <button class="period-arrow" id="previousPeriod" type="button" aria-label="Période précédente">‹</button>
-        <div class="period-summary">
-          <span class="period-status" id="periodStatus">Période actuelle</span>
-          <button class="period-selector" id="periodSelector" type="button">Chargement… <span>⌄</span></button>
-          <small id="periodDates"></small>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#fff9f7" />
+    <meta name="description" content="Budget personnel par période de paie." />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon-180.png" />
+    <title>Lilas Budget</title>
+  </head>
+  <body>
+    <div class="app-shell is-initializing">
+      <header class="topbar">
+        <div class="brand-mark" aria-hidden="true">?</div>
+        <div class="brand-copy">
+          <span class="eyebrow">Mon budget</span><strong>Lilas</strong>
         </div>
-        <button class="period-arrow" id="nextPeriod" type="button" aria-label="Période suivante">›</button>
-      </section>
+        <button
+          class="icon-button"
+          id="settingsButton"
+          type="button"
+          aria-label="Ouvrir les réglages"
+          title="Réglages"
+        >
+          ⚙
+        </button>
+      </header>
 
-      <section class="hero-balance" aria-live="polite">
-        <div class="balance-orbit"></div>
-        <div class="balance-content">
-          <span class="eyebrow">Il te reste</span>
-          <strong id="globalRemaining">0,00 $</strong>
-          <span id="globalSpent">0,00 $ dépensé sur 0,00 $</span>
-        </div>
-        <div class="balance-sparkle" aria-hidden="true">✦</div>
-      </section>
+      <main>
+        <section
+          class="period-strip"
+          aria-label="Navigation entre les périodes"
+        >
+          <button
+            class="period-arrow"
+            id="previousPeriod"
+            type="button"
+            aria-label="Période précédente"
+          >
+            ‹
+          </button>
+          <div class="period-summary">
+            <span class="period-status" id="periodStatus"
+              >Période actuelle</span
+            >
+            <button class="period-selector" id="periodSelector" type="button">
+              Chargement… <span>⌄</span>
+            </button>
+            <small id="periodDates"></small>
+          </div>
+          <button
+            class="period-arrow"
+            id="nextPeriod"
+            type="button"
+            aria-label="Période suivante"
+          >
+            ›
+          </button>
+        </section>
 
-      <section class="section-heading">
-        <div><span class="eyebrow">Répartition</span><h1>Mes enveloppes</h1></div>
-        <button class="text-button" id="manageCategories" type="button">Gérer</button>
-      </section>
+        <section class="hero-balance" aria-live="polite">
+          <div class="balance-orbit"></div>
+          <div class="balance-content">
+            <span class="eyebrow">Il te reste</span>
+            <strong id="globalRemaining">0,00 $</strong>
+            <span id="globalSpent">0,00 $ dépensé sur 0,00 $</span>
+          </div>
+          <div class="balance-sparkle" aria-hidden="true">✦</div>
+        </section>
 
-      <section class="category-list" id="categoryList" aria-live="polite"></section>
+        <section class="section-heading">
+          <div>
+            <span class="eyebrow">Répartition</span>
+            <h1>Mes enveloppes</h1>
+          </div>
+          <button class="text-button" id="manageCategories" type="button">
+            Gérer
+          </button>
+        </section>
 
-      <button class="add-category-button" id="addCategoryButton" type="button"><span>＋</span> Ajouter une enveloppe</button>
+        <section
+          class="category-list"
+          id="categoryList"
+          aria-live="polite"
+        ></section>
 
-      <section class="insight-banner" id="insightBanner">
-        <span class="insight-icon">♡</span>
-        <div><strong id="insightTitle">Petit pas, grand équilibre</strong><p id="insightText">Chaque dépense ajoutée garde ton budget à jour.</p></div>
-      </section>
-    </main>
+        <button
+          class="add-category-button"
+          id="addCategoryButton"
+          type="button"
+        >
+          <span>＋</span> Ajouter une enveloppe
+        </button>
 
-    <nav class="bottom-nav" aria-label="Navigation principale">
-      <button class="nav-item active" type="button"><span>◒</span><small>Budget</small></button>
-      <button class="nav-item" id="historyNav" type="button"><span>↗</span><small>Historique</small></button>
-      <button class="nav-item" id="settingsNav" type="button"><span>⚙</span><small>Réglages</small></button>
-    </nav>
-  </div>
+        <section class="insight-banner" id="insightBanner">
+          <span class="insight-icon">♡</span>
+          <div>
+            <strong id="insightTitle">Petit pas, grand équilibre</strong>
+            <p id="insightText">
+              Chaque dépense ajoutée garde ton budget à jour.
+            </p>
+          </div>
+        </section>
+      </main>
 
-  <div class="modal-backdrop" id="modalBackdrop" hidden>
-    <section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"></section>
-  </div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="app.js"></script>
-</body>
+      <nav class="bottom-nav" aria-label="Navigation principale">
+        <button class="nav-item active" type="button">
+          <span>◒</span><small>Budget</small>
+        </button>
+        <button class="nav-item" id="historyNav" type="button">
+          <span aria-hidden="true">↗︎</span><small>Historique</small>
+        </button>
+        <button class="nav-item" id="settingsNav" type="button">
+          <span aria-hidden="true">⚙︎</span><small>Réglages</small>
+        </button>
+      </nav>
+    </div>
+
+    <div class="modal-backdrop" id="modalBackdrop" hidden>
+      <section
+        class="modal"
+        id="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      ></section>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="app.js"></script>
+  </body>
 </html>
